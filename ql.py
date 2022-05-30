@@ -74,7 +74,8 @@ class Ql(object):
             'Content-Type': 'application/json;charset=UTF-8',
             'Content-Length': len(json.dumps(data))
         }
-
+        print(data)
+        print(headers)
         resp = requests.put(self.prefix + '/api/envs', params, json=data, headers=headers)
         return resp.json()
 
