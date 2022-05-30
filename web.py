@@ -83,13 +83,11 @@ async def recv(msg_signature: str,
     # "MsgId":"唯一id，需要针对此id做出响应", "AagentID": "应用id"}
     content = decrypt_data.get('Content', '')
 
+    print(content)
     if content.lower().startswith('add'):
         user = User(cookie=content)
         s_resp_data = resp_data(decrypt_data, user.ck_login())
 
-    # 处理文本消息
-    if content == '我帅吗':
-        s_resp_data = resp_data(decrypt_data, 'BEF')
     print('响应值为：' + format(s_resp_data))
     ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=s_resp_data, sNonce=nonce)
     if ret == 0:
