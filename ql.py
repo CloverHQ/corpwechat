@@ -52,7 +52,7 @@ class Ql(object):
             'authorization': 'Bearer {0}'.format(token),
             'Content-Type': 'application/json;charset=UTF-8'
         }
-        resp = requests.post(self.prefix + '/api/envs', params, json=data, headers=headers)
+        resp = requests.post(self.prefix + '/api/envs', params=params, json=[data], headers=headers)
         return resp.json()
 
     def update_env(self, eid, remarks, cookie):
@@ -64,7 +64,7 @@ class Ql(object):
         data = {
             'name': 'JD_COOKIE',
             'value': cookie,
-            'eid': eid,
+            'id': eid,
             'remarks': remarks
         }
 
@@ -72,11 +72,9 @@ class Ql(object):
             'Accept': 'application/json',
             'authorization': 'Bearer {0}'.format(token),
             'Content-Type': 'application/json;charset=UTF-8',
-            'Content-Length': len(json.dumps(data))
+            'Content-Length': str(len(json.dumps(data)))
         }
-        print(data)
-        print(headers)
-        resp = requests.put(self.prefix + '/api/envs', params, json=data, headers=headers)
+        resp = requests.put(self.prefix + '/api/envs', params=params, json=data, headers=headers)
         return resp.json()
 
     def del_env(self, eid):
