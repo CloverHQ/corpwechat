@@ -90,7 +90,7 @@ async def recv(msg_signature: str,
     # 处理文本消息
     if content == '我帅吗':
         s_resp_data = resp_data(decrypt_data, 'BEF')
-    print('响应值为：[0]'.format(s_resp_data))
+    print('响应值为：' + format(s_resp_data))
     ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=s_resp_data, sNonce=nonce)
     if ret == 0:
         return Response(content=send_msg)
@@ -99,6 +99,7 @@ async def recv(msg_signature: str,
 
 
 def resp_data(decrypt_data, content):
+    print('ck_login' + content)
     return """<xml>
    <ToUserName>{to_username}</ToUserName>
    <FromUserName>{from_username}</FromUserName> 
