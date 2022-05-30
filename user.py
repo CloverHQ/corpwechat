@@ -15,21 +15,23 @@ ql = Ql()
 class User(object):
 
     def __init__(self, cookie):
-        self.pt_key = re.search('pt_key=(.*?);', cookie).group()
-        self.pt_pin = re.search('pt_key=(.*?);', cookie).group()
-        self.cookie = 'pt_key=' + self.pt_key + ';pt_pin=' + self.pt_pin + ';'
-        self.remarks = urllib.parse.quote(self.pt_pin)
+        self.pt_key = re.search('pt_key=(.*?);', cookie).group(1)
+        self.pt_pin = re.search('pt_pin=(.*?);', cookie).group(1)
+        self.cookie = 'pt_key=' + self.pt_key + ';pt_pin=' + urllib.parse.quote(self.pt_pin) + ';'
+        self.remarks = self.pt_pin
 
     def ck_login(self):
         envs = ql.get_envs()
 
-        for env in envs:
-            if re.search('pt_pin=(.*?);', env['value']).group() == self.pt_pin:
-                response = ql.update_env(env['eid'], remarks=self.remarks, cookie=self.cookie)
-                print(response)
-                message = '欢迎回来' if response['code'] == 200 else '更新账户错误，请检查Cookie后重试！！！'
-            else:
-                response = ql.add_env(cookie=self.cookie, remarks=self.remarks)
-                print(response)
-                message = '注册成功' if response['code'] == 200 else '添加账户错误，请检查Cookie后重试！！！'
-            return message
+        env = filter(lambda x: re.search('pt_pin=(.*?);', x['value']).group(1) == urllib.parse.quote(self.pt_pin), envs)
+        find_env = list(env)
+        if find_env:
+            env = find_env[0]
+            response = ql.update_env(env['id'], remarks=self.remarks, cookie=self.cookie)
+            message = '欢迎回来' + self.remarks if response['code'] == 200 else '更新账户错误，请检查Cookie后重试！！！'
+        else:
+            response = ql.add_env(cookie=self.cookie, remarks=self.remarks)
+            message = '注册成功' + self.remarks if response['code'] == 200 else '添加账户错误，请检查Cookie后重试！！！'
+        return message
+
+
