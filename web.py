@@ -73,7 +73,6 @@ async def recv(msg_signature: str,
     :param request:
     :return:
     """
-    global s_resp_data
     body = await request.body()
     ret, sMsg = wxcpt.DecryptMsg(body.decode('utf-8'), msg_signature, timestamp, nonce)
     decrypt_data = {}
@@ -83,17 +82,15 @@ async def recv(msg_signature: str,
     # "MsgId":"唯一id，需要针对此id做出响应", "AagentID": "应用id"}
     content = decrypt_data.get('Content', '')
 
-    print(content)
     if content.lower().startswith('add'):
         user = User(cookie=content)
-        s_resp_data = resp_data(decrypt_data, user.ck_login())
-
-    print('响应值为：' + format(s_resp_data))
-    ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=s_resp_data, sNonce=nonce)
-    if ret == 0:
-        return Response(content=send_msg)
-    else:
-        print(send_msg)
+        s_reply_data = resp_data(decrypt_data, user.ck_login())
+        print('响应值为：' + format(s_reply_data))
+        ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=s_reply_data, sNonce=nonce)
+        if ret == 0:
+            return Response(content=send_msg)
+        else:
+            print(send_msg)
 
 
 def resp_data(decrypt_data, content):
