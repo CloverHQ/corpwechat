@@ -12,11 +12,14 @@ Create Date: 2021/6/19
 import argparse
 from fastapi import FastAPI
 from fastapi import Response, Request
+
+from ql import Ql
 from WXBizMsgCrypt3 import WXBizMsgCrypt
 from xml.etree.ElementTree import fromstring
 import uvicorn
 
 app = FastAPI()
+
 
 def parse_args():
     arg_parser = argparse.ArgumentParser()
@@ -27,8 +30,10 @@ def parse_args():
     args = arg_parser.parse_args()
     return args
 
+
 args = parse_args()
 wxcpt = WXBizMsgCrypt(args.token, args.aeskey, args.corpid)
+
 
 @app.get("/")
 async def verify(msg_signature: str,
@@ -49,47 +54,49 @@ async def verify(msg_signature: str,
     else:
         print(sEchoStr)
 
+ql = Ql()
+
 @app.post("/")
 async def recv(msg_signature: str,
                timestamp: str,
                nonce: str,
                request: Request):
-    '''
+    """
     接收用户消息，可进行被动响应
     :param msg_signature:
     :param timestamp:
     :param nonce:
     :param request:
     :return:
-    '''
+    """
     body = await request.body()
     ret, sMsg = wxcpt.DecryptMsg(body.decode('utf-8'), msg_signature, timestamp, nonce)
     decrypt_data = {}
     for node in list(fromstring(sMsg.decode('utf-8'))):
         decrypt_data[node.tag] = node.text
-    # 解析后得到的decrypt_data: {"ToUserName":"企业号", "FromUserName":"发送者用户名", "CreateTime":"发送时间", "Content":"用户发送的内容", "MsgId":"唯一id，需要针对此id做出响应", "AagentID": "应用id"}
-    # 用户应根据Content的内容自定义要做出的行为，包括响应返回数据，如下例子，如果发送的是123，就返回hello world
+    # 解析后得到的decrypt_data: {"ToUserName":"企业号", "FromUserName":"发送者用户名", "CreateTime":"发送时间", "Content":"用户发送的内容",
+    # "MsgId":"唯一id，需要针对此id做出响应", "AagentID": "应用id"}
 
-    # 处理任务卡片消息
-    if decrypt_data.get('EventKey', '') == 'no':
-        # 返回信息
-        sRespData="""<xml>
-   <ToUserName>{to_username}</ToUserName>
-   <FromUserName>{from_username}</FromUserName>
-   <CreateTime>{create_time}</CreateTime>
-   <MsgType>update_taskcard</MsgType>
-   <TaskCard>
-       <ReplaceName>已处理</ReplaceName>
-   </TaskCard>
-</xml>
-""".format(to_username=decrypt_data['ToUserName'],
-           from_username=decrypt_data['FromUserName'],
-           create_time=decrypt_data['CreateTime'],
-           event_key=decrypt_data['EventKey'],
-           agentid=decrypt_data['AgentId'])
+    if decrypt_data.get('Content', '').startswith('add'):
+        # 查询用户是否存在
+        ql.get_envs()
+
+        # 调用新增或更新接口
+        ql.add_env()
+        pass
+
     # 处理文本消息
     if decrypt_data.get('Content', '') == '我帅吗':
-        sRespData = """<xml>
+        sRespData = resp_data(decrypt_data, 'BEF')
+    ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=sRespData, sNonce=nonce)
+    if ret == 0:
+        return Response(content=send_msg)
+    else:
+        print(send_msg)
+
+
+def resp_data(decrypt_data, content):
+    return """<xml>
    <ToUserName>{to_username}</ToUserName>
    <FromUserName>{from_username}</FromUserName> 
    <CreateTime>{create_time}</CreateTime>
@@ -99,13 +106,7 @@ async def recv(msg_signature: str,
 """.format(to_username=decrypt_data['ToUserName'],
            from_username=decrypt_data['FromUserName'],
            create_time=decrypt_data['CreateTime'],
-           content="帅得一逼",)
-    ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=sRespData, sNonce=nonce)
-    if ret == 0:
-        return Response(content=send_msg)
-    else:
-        print(send_msg)
-
+           content=content, )
 
 
 if __name__ == "__main__":
