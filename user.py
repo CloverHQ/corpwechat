@@ -26,9 +26,10 @@ class User(object):
         for env in envs:
             if re.search('pt_pin=(.*?);', env['value']).group() == self.pt_pin:
                 response = ql.update_env(env['eid'], remarks=self.remarks, cookie=self.cookie)
-                message = response['code'] == 200 if '欢迎回来' else '更新账户错误，请检查Cookie后重试！！！'
+                print(response)
+                message = '欢迎回来' if response['code'] == 200 else '更新账户错误，请检查Cookie后重试！！！'
             else:
                 response = ql.add_env(cookie=self.cookie, remarks=self.remarks)
-                message = response['code'] == 200 if '注册成功' else '添加账户错误，请检查Cookie后重试！！！'
+                print(response)
+                message = '注册成功' if response['code'] == 200 else '添加账户错误，请检查Cookie后重试！！！'
             return message
-

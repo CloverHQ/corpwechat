@@ -99,7 +99,6 @@ async def recv(msg_signature: str,
 
 
 def resp_data(decrypt_data, content):
-    print('ck_login' + content)
     return """<xml>
    <ToUserName>{to_username}</ToUserName>
    <FromUserName>{from_username}</FromUserName> 
