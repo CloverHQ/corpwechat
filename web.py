@@ -10,6 +10,8 @@ Create Date: 2021/6/19
 -----------------End-----------------------------
 """
 import argparse
+import re
+
 from fastapi import FastAPI
 from fastapi import Response, Request
 
@@ -17,6 +19,8 @@ from ql import Ql
 from WXBizMsgCrypt3 import WXBizMsgCrypt
 from xml.etree.ElementTree import fromstring
 import uvicorn
+
+from user import User
 
 app = FastAPI()
 
@@ -76,17 +80,14 @@ async def recv(msg_signature: str,
         decrypt_data[node.tag] = node.text
     # 解析后得到的decrypt_data: {"ToUserName":"企业号", "FromUserName":"发送者用户名", "CreateTime":"发送时间", "Content":"用户发送的内容",
     # "MsgId":"唯一id，需要针对此id做出响应", "AagentID": "应用id"}
+    content = decrypt_data.get('Content', '')
 
-    if decrypt_data.get('Content', '').startswith('add'):
-        # 查询用户是否存在
-        ql.get_envs()
-
-        # 调用新增或更新接口
-        ql.add_env()
-        pass
+    if content.lower().startswith('add'):
+        user = User(cookie=content)
+        resp_data(decrypt_data, user.ck_login())
 
     # 处理文本消息
-    if decrypt_data.get('Content', '') == '我帅吗':
+    if content == '我帅吗':
         sRespData = resp_data(decrypt_data, 'BEF')
     ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=sRespData, sNonce=nonce)
     if ret == 0:
