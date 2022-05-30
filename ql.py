@@ -33,7 +33,7 @@ class Ql(object):
             'authorization': 'Bearer {0}'.format(token),
         }
         resp = requests.get(self.prefix + '/api/envs', params, headers=headers)
-        return resp.json()
+        return resp.json()['data']
 
     def add_env(self, cookie, remarks):
         token = self.get_token()
