@@ -73,6 +73,7 @@ async def recv(msg_signature: str,
     :param request:
     :return:
     """
+    global s_resp_data
     body = await request.body()
     ret, sMsg = wxcpt.DecryptMsg(body.decode('utf-8'), msg_signature, timestamp, nonce)
     decrypt_data = {}
@@ -84,12 +85,13 @@ async def recv(msg_signature: str,
 
     if content.lower().startswith('add'):
         user = User(cookie=content)
-        resp_data(decrypt_data, user.ck_login())
+        s_resp_data = resp_data(decrypt_data, user.ck_login())
 
     # 处理文本消息
     if content == '我帅吗':
-        sRespData = resp_data(decrypt_data, 'BEF')
-    ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=sRespData, sNonce=nonce)
+        s_resp_data = resp_data(decrypt_data, 'BEF')
+    print('响应值为：[0]'.format(s_resp_data))
+    ret, send_msg = wxcpt.EncryptMsg(sReplyMsg=s_resp_data, sNonce=nonce)
     if ret == 0:
         return Response(content=send_msg)
     else:
